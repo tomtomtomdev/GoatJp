@@ -9,9 +9,7 @@ import SwiftUI
 
 /// Main home screen showing widget options and current weather
 struct HomeView: View {
-    @State private var currentWeather: Weather?
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+    @State private var viewModel = HomeViewModel()
 
     var body: some View {
         NavigationView {
@@ -23,7 +21,7 @@ struct HomeView: View {
                     .padding(.top)
 
                 // Current Weather Preview
-                if let weather = currentWeather {
+                if let weather = viewModel.currentWeather {
                     CurrentWeatherView(weather: weather)
                         .padding()
                         .background(
@@ -31,13 +29,23 @@ struct HomeView: View {
                                 .fill(Color(.systemBackground))
                                 .shadow(radius: 4)
                         )
-                } else if isLoading {
+                } else if viewModel.isLoading {
                     ProgressView("Loading weather...")
                         .padding()
-                } else if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .padding()
+                } else if let error = viewModel.errorMessage {
+                    VStack(spacing: 8) {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+
+                        Button("Retry", action: {
+                            Task {
+                                await viewModel.loadSampleWeather()
+                            }
+                        })
+                        .buttonStyle(.bordered)
+                    }
+                    .padding()
                 }
 
                 // Widget Options
@@ -96,25 +104,12 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                loadSampleWeather()
+                Task {
+                    // For now, load sample weather
+                    // In production, you'd call loadWeatherForCurrentLocation()
+                    await viewModel.loadSampleWeather()
+                }
             }
-        }
-    }
-
-    private func loadSampleWeather() {
-        isLoading = true
-        errorMessage = nil
-
-        // For now, load sample weather
-        // In a real app, this would use LocationService and WeatherService
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            currentWeather = Weather(
-                temperature: 22.5,
-                condition: .sunny,
-                location: "Tokyo",
-                timestamp: Date()
-            )
-            isLoading = false
         }
     }
 }
