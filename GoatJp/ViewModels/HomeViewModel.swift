@@ -18,6 +18,7 @@ final class HomeViewModel {
     // MARK: - Dependencies
     private let weatherService: WeatherServiceProtocol
     private let locationService: LocationServiceProtocol
+    private let storageService: WidgetStorageService
 
     // MARK: - Constants
     private let apiKey = "" // TODO: Add your OpenWeatherMap API key
@@ -25,10 +26,12 @@ final class HomeViewModel {
     // MARK: - Initialization
     init(
         weatherService: WeatherServiceProtocol = WeatherService(apiKey: ""),
-        locationService: LocationServiceProtocol = LocationService()
+        locationService: LocationServiceProtocol = LocationService(),
+        storageService: WidgetStorageService = WidgetStorageService()
     ) {
         self.weatherService = weatherService
         self.locationService = locationService
+        self.storageService = storageService
     }
 
     // MARK: - Public Methods
@@ -57,6 +60,9 @@ final class HomeViewModel {
                 self.currentWeather = weather
                 self.isLoading = false
             }
+
+            // Save to shared storage for widget
+            storageService.saveWeather(weather)
         } catch let error as LocationServiceError {
             await MainActor.run {
                 self.errorMessage = error.localizedDescription
@@ -83,15 +89,20 @@ final class HomeViewModel {
         // Simulate network delay
         try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
 
+        let sampleWeather = Weather(
+            temperature: 22.5,
+            condition: .sunny,
+            location: "Tokyo",
+            timestamp: Date()
+        )
+
         await MainActor.run {
-            self.currentWeather = Weather(
-                temperature: 22.5,
-                condition: .sunny,
-                location: "Tokyo",
-                timestamp: Date()
-            )
+            self.currentWeather = sampleWeather
             self.isLoading = false
         }
+
+        // Save to shared storage for widget
+        storageService.saveWeather(sampleWeather)
     }
 
     /// Checks if location permission has been granted

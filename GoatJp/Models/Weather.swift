@@ -8,7 +8,7 @@
 import Foundation
 
 /// Represents weather information for a specific location
-struct Weather {
+struct Weather: Codable {
     /// Temperature in Celsius
     let temperature: Double
 
@@ -22,7 +22,7 @@ struct Weather {
     let timestamp: Date
 
     /// Weather condition types
-    enum Condition: CaseIterable {
+    enum Condition: CaseIterable, Codable {
         case sunny
         case cloudy
         case sunBehindCloud
